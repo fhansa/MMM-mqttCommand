@@ -1,7 +1,7 @@
 /* Magic Mirror
- * Module: MMQT_COMMAND
+ * Module: MMM-mqttCommand
  *
- * By Joseph Bethge
+ * By Fredrik Hansson
  * MIT Licensed.
  */
 
@@ -10,7 +10,10 @@ const exec = require("child_process").exec;
 const mqtt = require("mqtt");
 
 module.exports = NodeHelper.create({
-	// Subclass start method.
+
+    //
+    // onStart
+    //
 	start: function() {
 		var self = this;
 
@@ -26,7 +29,7 @@ module.exports = NodeHelper.create({
         var self = this;
         console.log("MQTT Recieved: " + notification);
         if (notification === "MQTT_COMMAND_CONFIG" && !this.config) {
-            console.log("Config applied");  
+            //console.log("Config applied");  
             this.config = true;
             this.config = payload;
             this.mqttClient = this.startupMQTT();
@@ -43,7 +46,6 @@ module.exports = NodeHelper.create({
     //      
     //
     //
-
     startupMQTT: function() {
 
         self = this;

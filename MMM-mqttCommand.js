@@ -1,9 +1,9 @@
 /* global Module */
 
 /* Magic Mirror
- * Module: Calendar
+ * Module: MMM-mqttCommand
  *
- * By Michael Teeuw http://michaelteeuw.nl
+ * By Fredrik Hansson
  * MIT Licensed.
  */
 
@@ -12,45 +12,33 @@ Module.register("MMM-mqttCommand", {
 	// Define module defaults
 	defaults: {	
         mqtt: {
+
+			// Server settings 
             server: "localhost",
             port: "xxx",
             username:"xxx",
 			password:"pwd",
+
+			// Device definitions - currently only supporting switch (HomeAssistant mqtt-switch)
 			devices: [
 				{ 
-					type: "switch",
-					state_topic: "xx",
-					payload_on:"on",
-					payload_off:"off",
-					command_topic:"XX",
-					availability_topic:"XX",
-					payload_available:"online",
-					payload_unavailable:"offline",
+					type: "switch",					// Type of device 
+					state_topic: "xx",				// mqtt topic for state
+					payload_on:"on",				// Payload for On-state
+					payload_off:"off",				// Payload for Off-state
+					command_topic:"XX",				// mqtt topic to set the switch
+					availability_topic:"XX",		// mqtt topic for availability
+					payload_available:"online",		// Payload for avalable
+					payload_unavailable:"offline",	// Payload for unavalable
 				}
 			]
         },
 
 	},
 
-	// Define required scripts.
-	getStyles: function () {
-		return false;
-	},
-
-	// Define required scripts.
-	getScripts: function () {
-		return false;
-	},
-
-	// Define required translations.
-	getTranslations: function () {
-		// The translations for the default modules are defined in the core translation files.
-		// Therefor we can just return false. Otherwise we should have returned a dictionary.
-		// If you're trying to build your own module including translations, check out the documentation.
-		return false;
-	},
-
-	// Override start method.
+	// 
+	//	OnStart-method
+	//
 	start: function () {
 		Log.log("Starting module: " + this.name);
 
@@ -58,7 +46,10 @@ Module.register("MMM-mqttCommand", {
         this.sendSocketNotification("MQTT_COMMAND_CONFIG", this.config);	
     },
 
-	// Override socket notification handler.
+	// 
+	// onSocketNotification
+	//		- Todo: enable debug information or other info to be presented on screen
+	//
 	socketNotificationReceived: function (notification, payload) {
 		this.updateDom(this.config.animationSpeed);
 	},
