@@ -1,6 +1,9 @@
 # MMM-mqttCommand
 MQTT Command broker - trigger various command in Magic Mirror using MQTT
 
+## Status
+* This project is in pilot phase. Currently hardcoded to one command: Monitor ON/OFF.
+
 ## Features
 * Contains native commands 
 * Map MQTT-command to notification
