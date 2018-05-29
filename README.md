@@ -10,6 +10,14 @@ Special focus on exposing commands/functions in MagicMirror to be used in HomeAs
 * Route notification to sendNotification to open up usage of other modules (however state is not supported)
 * Possible to expose many functions as individual devices.
 
+## Future ideas
+* implement HAP nodejs to support HomeKit directly (probably another module)
+* implement commands for 
+  * carousel navigation using [MMM-Carousel](https://github.com/shbatm/MMM-Carousel)
+  * [MMM-Remote-Control](https://github.com/Jopyth/MMM-Remote-Control) with state 
+  * Generic notification to enable other modules to publish state making all modules with notification support available to homekit.
+  * show/hide module using 
+  * displaying sensors
 
 ## Getting Started
 
@@ -65,43 +73,13 @@ Test-command just response to mqtt-commands qithout avtually doing anything.
   ]
 }
 ```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
+### MQTT
+Mqtt device reference:
+* [HomeAssistant MQTT-switch](https://www.home-assistant.io/components/switch.mqtt/)
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
 
   
