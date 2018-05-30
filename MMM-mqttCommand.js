@@ -16,9 +16,9 @@ Module.register("MMM-mqttCommand", {
 			{ 
 				// Server settings 
 				server: "localhost",
-				port: "xxx",
-				username:"xxx",
-				password:"pwd",
+				port: "1883",
+				username:"",
+				password:"",
 				command_type: "test",
 				name: "Monitor On/Off",
 				type: "switch",					// Type of device 
@@ -48,10 +48,36 @@ Module.register("MMM-mqttCommand", {
 	//		- Todo: enable debug information or other info to be presented on screen
 	//
 	socketNotificationReceived: function (notification, payload) {
+		self = this;
+		console.log(notification, payload);
 		if(notification == "NOTIFICATION") {
 			msg = JSON.parse(payload);
 			this.sendNotification(msg.notification, msg.payload);
+		} else if (notification === "HIDE_SHOW") {
+			msg = payload;
+			MM.getModules().enumerate(function(mod) {
+				if (mod.name === msg.module) {
+					if(msg.command == "check") {
+						self.notifyModuleStatus(mod.name, !mod.hidden);
+					} else 
+					if (mod.hidden === msg.show) {
+						if(mod.hidden) {
+							mod.show(500, function() {
+								self.notifyModuleStatus(mod.name, true);
+							});
+						} else {
+							mod.hide(500, function() {
+								self.notifyModuleStatus(mod.name, false);
+							});
+						}
+					} 
+				}
+			});
 		}
+	},
+
+	notifyModuleStatus:function(name, flag) {
+		this.sendSocketNotification("HIDE_SHOW_RESULT", { module: name, show : flag });
 	},
 
 	// Override dom generator.
