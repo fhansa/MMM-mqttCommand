@@ -51,13 +51,17 @@ class mqttCommand {
         this.node_helper = node_helper;
     }
 
+    notificationCallback(message) {
+        return;
+    }
+
     //
     //  mqtt state publish. 
     //      Implement logic to determine state here and publish accordingly. 
     //      Leave empty if state is not possible to implement. 
     //      In that case set optimistic to true in HomeAssistant
     //
-    publishState() {
+    publishState(checkInitialState = false) {
         return;
     }
 
@@ -68,7 +72,6 @@ class mqttCommand {
     //      This message is also used as mqtt last will   
     //
     publishAvailability(isAvailable) {
-        console.log("mqttCommand-publishAvailability");
         if(this.client.deviceConfig.availability_topic) {
             if(isAvailable)
                 this.client.publish(this.client.deviceConfig.availability_topic, this.client.deviceConfig.payload_available);   
@@ -87,8 +90,14 @@ class mqttCommand {
     }
 }
 
+
+/*
+    mqttCommandNotification
+        
+        Command class for routing notifications from MQTT to sendNotification
+*/
 class mqttCommandNotification extends mqttCommand {
-    publishState() {
+    publishState(checkInitialState = false) {
         // Notification cannot publish state
         return;
     }
@@ -98,9 +107,55 @@ class mqttCommandNotification extends mqttCommand {
     }
 }
 
+/*
+    mqttCommandHideShow
+
+        Implementation of command class for hiding and showing modules
+
+*/
+class mqttCommandHideShow extends mqttCommand {
+
+	publishState(checkInitialState = false) {
+        self = this;
+        if(checkInitialState) {
+            self.node_helper.sendSocketNotification("HIDE_SHOW", { module:self.client.deviceConfig.module,   command:"check"});
+            return;
+        }
+        if (!this.client.deviceConfig.state_topic) 
+            return;
+        if(this.state)
+            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on);
+        else    
+            // deviceConfig should contain module identifier
+            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off);
+    }
+
+    executeCommand(message) {
+        self = this;
+        if(message == self.client.deviceConfig.payload_on) {
+            // Show module
+            self.node_helper.sendSocketNotification("HIDE_SHOW", { module:self.client.deviceConfig.module, show:true, command:"set" });
+        } else if (message == self.client.deviceConfig.payload_off) {
+            self.node_helper.sendSocketNotification("HIDE_SHOW", { module:self.client.deviceConfig.module, show:false, command:"set" });
+        }
+    }
+
+    notificationCallback(message) {
+        this.state = message.show;
+        self.publishState();
+        return;
+    }
+}
+
+/*
+    mqttCommandMonitor
+
+        Implementation of command class for turning monitor on and off
+
+*/
 class mqttCommandMonitor extends mqttCommand {
 
-	publishState() {
+	publishState(checkInitialState = false) {
         self = this;
         if (!this.client.deviceConfig.state_topic) 
             return;
@@ -149,13 +204,19 @@ class mqttCommandMonitor extends mqttCommand {
     }
 }
 
+/*
+    mqttCommandTest
+        Mqtt test command. 
+        Command simulates a on/off device.
+
+*/
 class mqttCommandTest extends mqttCommand {
     constructor(client, node_helper) {
         super(client, node_helper);
         this.state = "on";
     }
 
-	publishState() {
+	publishState(checkInitialState = false) {
         self = this;
         if (!this.client.deviceConfig.state_topic) 
             return;
@@ -196,6 +257,7 @@ module.exports = NodeHelper.create({
         this.mqttClient = false;
         this.clients = [];
         this.idx = 0;
+        this.observers = [];
 	},
 
     //
@@ -210,6 +272,11 @@ module.exports = NodeHelper.create({
             this.config = true;
             this.config = payload;
             this.startupMQTT();
+        } else if(notification === "HIDE_SHOW_RESULT") {
+            //console.log("HIDE_SHOW_RESULT", payload);
+            var obs = this.observers[payload.module];
+            if(obs)
+                obs.notificationCallback(payload);
         }
     },
     
@@ -230,7 +297,10 @@ module.exports = NodeHelper.create({
             console.log("Error: no config, cannot startupMQTT");
             return
         }
-        // Only handle one device at the moment
+
+        // 
+        //  Set up all defined devices
+        //
         this.config.devices.forEach(function(config) {
 
             //
@@ -249,7 +319,7 @@ module.exports = NodeHelper.create({
             // Store device configuration on client
             client.deviceConfig = config;
 
-            // Determine command-class
+            // Determine command-class - kind of factory
             switch(client.deviceConfig.command_type) {
                 case "notification" :
                     client.command = new mqttCommandNotification(client, self);
@@ -259,6 +329,10 @@ module.exports = NodeHelper.create({
                 break;
                 case "test":
                     client.command = new mqttCommandTest(client, self);
+                break;
+                case "native_modulevisibility":
+                    client.command = new mqttCommandHideShow(client, self);
+                    self.observers[client.deviceConfig.module] = client.command;
                 break;
             }
 
@@ -270,13 +344,21 @@ module.exports = NodeHelper.create({
                 console.log("MQTT Connected");
                 
                 //Subscribe to COMMAND
-                client.subscribe(client.deviceConfig.command_topic);
+                var cmd = client.deviceConfig.command_topic;
+                var birth = client.deviceConfig.brokerBirthTopic;
+                client.subscribe(
+                        { cmd : 0,  
+                          birth : 0 });
                 
                 // Publish availability if that is defined
                 client.command.publishAvailability(true);
                 
                 // Publish state if that is defined
-                client.command.publishState(client);
+                client.command.publishState(true);
+
+                // Subscribe to birth-topic
+                //client.subscribe(client.deviceConfig.brokerBirthTopic);
+
             });
 
             //
@@ -292,6 +374,11 @@ module.exports = NodeHelper.create({
             //
             client.on('message', function (mqttTopic, message) {
                 console.log('got mqtt message', mqttTopic, message.toString());
+
+                if(mqttTpoic == client.deviceConfig.brokerBirthTopic) {
+                    console.log("Got birth message");
+                    client.command.publishAvailability(true);
+                }
 
                 // Failsafe - check topic (even though we only subscribe to one)
                 if(mqttTopic == client.deviceConfig.command_topic) {
