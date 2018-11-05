@@ -29,6 +29,7 @@ Module.register("MMM-mqttCommand", {
 				availability_topic:"XX",		// mqtt topic for availability
 				payload_available:"online",		// Payload for avalable
 				payload_unavailable:"offline",	// Payload for unavalable
+				brokerBirthTopic : "home/ha/availability"
 			}
 		]
 	},

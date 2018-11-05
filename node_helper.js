@@ -72,7 +72,6 @@ class mqttCommand {
     //      This message is also used as mqtt last will   
     //
     publishAvailability(isAvailable) {
-        console.log("mqttCommand-publishAvailability");
         if(this.client.deviceConfig.availability_topic) {
             if(isAvailable)
                 this.client.publish(this.client.deviceConfig.availability_topic, this.client.deviceConfig.payload_available, { "retain": true } );   
@@ -345,7 +344,11 @@ module.exports = NodeHelper.create({
                 console.log("MQTT Connected");
                 
                 //Subscribe to COMMAND
-                client.subscribe(client.deviceConfig.command_topic);
+                var cmd = client.deviceConfig.command_topic;
+                var birth = client.deviceConfig.brokerBirthTopic;
+                client.subscribe(
+                        { cmd : 0,  
+                          birth : 0 });
                 
                 // Publish availability if that is defined
                 client.command.publishAvailability(true);
@@ -367,6 +370,11 @@ module.exports = NodeHelper.create({
             //
             client.on('message', function (mqttTopic, message) {
                 console.log('got mqtt message', mqttTopic, message.toString());
+
+                if(mqttTpoic == client.deviceConfig.brokerBirthTopic) {
+                    console.log("Got birth message");
+                    client.command.publishAvailability(true);
+                }
 
                 // Failsafe - check topic (even though we only subscribe to one)
                 if(mqttTopic == client.deviceConfig.command_topic) {
