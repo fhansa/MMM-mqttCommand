@@ -163,10 +163,10 @@ class mqttCommandMonitor extends mqttCommand {
         function (error, stdout, stderr) {
             if (stdout.indexOf("TV is off") !== -1) {
                 // Screen is OFF, turn it ON
-                self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off);
+                self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off, { "retain": true });
             }
             else {
-                self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on);
+                self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on, { "retain": true });
             }
         });   
     }
