@@ -222,10 +222,10 @@ class mqttCommandTest extends mqttCommand {
         if (!this.client.deviceConfig.state_topic) 
             return;
         if(this.state === "off") {
-            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off);
+            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off, { "retain": true });
         }
         else {
-            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on);
+            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on, { "retain": true });
         }
     }
 
