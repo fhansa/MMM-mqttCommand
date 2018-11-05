@@ -74,9 +74,9 @@ class mqttCommand {
     publishAvailability(isAvailable) {
         if(this.client.deviceConfig.availability_topic) {
             if(isAvailable)
-                this.client.publish(this.client.deviceConfig.availability_topic, this.client.deviceConfig.payload_available);   
+                this.client.publish(this.client.deviceConfig.availability_topic, this.client.deviceConfig.payload_available, { "retain": true } );   
             else
-                this.client.publish(this.client.deviceConfig.availability_topic, this.client.deviceConfig.payload_available);   
+                this.client.publish(this.client.deviceConfig.availability_topic, this.client.deviceConfig.payload_available, { "retain": true } );   
         }
     }
 
@@ -355,10 +355,6 @@ module.exports = NodeHelper.create({
                 
                 // Publish state if that is defined
                 client.command.publishState(true);
-
-                // Subscribe to birth-topic
-                //client.subscribe(client.deviceConfig.brokerBirthTopic);
-
             });
 
             //
@@ -383,7 +379,7 @@ module.exports = NodeHelper.create({
                 // Failsafe - check topic (even though we only subscribe to one)
                 if(mqttTopic == client.deviceConfig.command_topic) {
                     // COMMAND
-                    console.log("COMMAND SET" + message);
+                    console.log("COMMAND SET" + mqttTopic + message);
                     client.command.executeCommand(message.toString());
                 }
             });
