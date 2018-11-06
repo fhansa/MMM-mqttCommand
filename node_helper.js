@@ -28,7 +28,7 @@ const mqtt = require("mqtt");
         * payload_on            = on
         * payload_off           = off
         * native_command
-        * notification          = NOTIFICATION, payload_on/payload_off
+        * notification          = NOTIFICATION, payload_on  /payload_off
 
 */
 
@@ -46,7 +46,6 @@ class mqttCommand {
     //  Keep reference to mqttClient and node_helper
     //
     constructor(client, node_helper) {
-        console.log("mqttCommand base");
         this.client = client;
         this.node_helper = node_helper;
     }
@@ -172,6 +171,7 @@ class mqttCommandMonitor extends mqttCommand {
     }
 
     executeCommand(message) {
+        console.log("Executing command monitor");
         self = this;
         if(message == self.client.deviceConfig.payload_on) {
             // TurnOn Screen
@@ -221,10 +221,10 @@ class mqttCommandTest extends mqttCommand {
         if (!this.client.deviceConfig.state_topic) 
             return;
         if(this.state === "off") {
-            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off, { "retain": true });
+            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_off);
         }
         else {
-            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on, { "retain": true });
+            self.client.publish(self.client.deviceConfig.state_topic, self.client.deviceConfig.payload_on);
         }
     }
 
@@ -308,8 +308,8 @@ module.exports = NodeHelper.create({
             //
             server = "mqtt://" + config.server + ":" + config.port;
             var client = mqtt.connect(server, {
-                username: config.username,
-                password: config.password,
+                //username: config.username,
+                //password: config.password,
                 clientId:"MQTT_COMMAND" + Math.random().toString(16).substr(2, 8),
                 keepalive:60,
                 will: { topic: config.availability_topic, payload: config.payload_unavailable },
@@ -345,10 +345,7 @@ module.exports = NodeHelper.create({
                 
                 //Subscribe to COMMAND
                 var cmd = client.deviceConfig.command_topic;
-                var birth = client.deviceConfig.brokerBirthTopic;
-                client.subscribe(
-                        { cmd : 0,  
-                          birth : 0 });
+                client.subscribe( cmd, { qos:0 });
                 
                 // Publish availability if that is defined
                 client.command.publishAvailability(true);
@@ -370,11 +367,6 @@ module.exports = NodeHelper.create({
             //
             client.on('message', function (mqttTopic, message) {
                 console.log('got mqtt message', mqttTopic, message.toString());
-
-                if(mqttTpoic == client.deviceConfig.brokerBirthTopic) {
-                    console.log("Got birth message");
-                    client.command.publishAvailability(true);
-                }
 
                 // Failsafe - check topic (even though we only subscribe to one)
                 if(mqttTopic == client.deviceConfig.command_topic) {
